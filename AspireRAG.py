@@ -20,57 +20,56 @@ class CareerRAG:
     def search_relevant_jobs(self, job_type: str) -> List[Dict]:
         """搜尋相關職位"""
         try:
-            # 定義工程師類型映射
-            engineer_types = {
-                # 網頁相關
-                '前端': ['前端工程師', '網頁工程師', '.NET工程師', 'Node.js工程師'],
-                '後端': ['後端工程師', 'Java工程師', 'Python工程師', '.NET工程師'],
-                '全端': ['全端工程師', '資深全端工程師'],
-                
-                # 資料相關
-                '資料': ['資料工程師', '資料科學家', '資料分析師', '大數據工程師'],
-                '資料庫': ['資料庫工程師', '資料庫管理員'],
-                
-                # AI/演算法相關
-                'AI': ['AI工程師', 'AI研究員', '機器學習工程師', '演算法工程師'],
-                
-                # 系統相關
-                '嵌入式': ['嵌入式系統工程師', '嵌入式軟體工程師'],
-                '系統': ['系統分析師', 'Linux系統工程師', '系統架構師'],
-                
-                # 特殊領域
-                '自動化': ['自動化工程師', '自動化測試工程師'],
-                '遊戲': ['遊戲開發工程師', '遊戲引擎工程師'],
-                '區塊鏈': ['區塊鏈工程師', '區塊鏈開發者'],
-                '資安': ['資訊安全工程師', '網路安全工程師'],
-                
-                # 行動應用
-                '行動': ['行動應用開發工程師', 'Android工程師', 'iOS工程師'],
-                
-                # DevOps/雲端
-                '雲端': ['雲端工程師', 'DevOps工程師', '雲端數據工程師'],
-                
-                # 其他
-                'ERP': ['ERP工程師'],
-                'IoT': ['IoT工程師'],
-                '測試': ['軟體測試工程師', '品質保證工程師']
+            # 職位類型對應表
+            job_type_mapping = {
+                '前端': {
+                    '職稱': ['前端工程師', '網頁工程師', '.NET工程師', 'Node.js工程師', 'JavaScript工程師', 'Web工程師'],
+                    '技能': ['HTML', 'CSS', 'JavaScript', 'React', 'Vue', 'Angular', '網頁開發', 'jQuery', 'TypeScript']
+                },
+                '後端': {
+                    '職稱': ['後端工程師', 'Java工程師', 'Python工程師', '.NET工程師', 'Node.js工程師'],
+                    '技能': ['Java', 'Python', 'SQL', 'Node.js', 'API', 'C#', 'PHP']
+                },
+                '全端': {
+                    '職稱': ['全端工程師', '全棧工程師', 'Full Stack工程師'],
+                    '技能': ['HTML', 'CSS', 'JavaScript', 'Java', 'Python', 'SQL', 'Node.js']
+                }
             }
             
-            # 獲取對應的職稱列表
-            search_titles = engineer_types.get(job_type, [job_type])
+            # 獲取對應的職稱和技能
+            job_info = job_type_mapping.get(job_type, {
+                '職稱': [job_type],
+                '技能': []
+            })
             
-            # 使用多個職稱進行搜尋
+            # 使用職稱和技能進行搜尋，放寬搜尋條件
             relevant_jobs = self.jobs_df[
-                self.jobs_df['職稱'].apply(lambda x: any(title in x for title in search_titles)) |
-                self.jobs_df['工作技能'].str.contains('|'.join(search_titles), na=False, case=False) |
-                self.jobs_df['擅長工具'].str.contains('|'.join(search_titles), na=False, case=False)
+                self.jobs_df['職稱'].apply(lambda x: any(title.lower() in str(x).lower() for title in job_info['職稱'])) |
+                self.jobs_df['工作技能'].str.contains('|'.join(job_info['技能']), na=False, case=False) |
+                self.jobs_df['擅長工具'].str.contains('|'.join(job_info['技能']), na=False, case=False) |
+                # 增加更多相關條件
+                self.jobs_df['職稱'].str.contains('工程師|開發|程式', na=False, case=False)
             ]
             
-            if len(relevant_jobs) == 0:
-                print(f"找不到與 {job_type} 相關的職位")
-                return []
+            # 計算職位相關性分數
+            def calculate_relevance(row):
+                score = 0
+                # 職稱相關性
+                if any(title.lower() in str(row['職稱']).lower() for title in job_info['職稱']):
+                    score += 5
+                # 技能相關性
+                if any(skill.lower() in str(row['擅長工具']).lower() for skill in job_info['技能']):
+                    score += 3
+                if any(skill.lower() in str(row['工作技能']).lower() for skill in job_info['技能']):
+                    score += 3
+                return score
+
+            # 添加相關性分數並排序
+            relevant_jobs['relevance_score'] = relevant_jobs.apply(calculate_relevance, axis=1)
+            relevant_jobs = relevant_jobs.sort_values('relevance_score', ascending=False)
             
-            return relevant_jobs.head(5).to_dict('records')
+            # 返回更多結果（如前100個）
+            return relevant_jobs.head(100).to_dict('records')
             
         except Exception as e:
             print(f"搜尋職位時發生錯誤: {str(e)}")
@@ -79,71 +78,88 @@ class CareerRAG:
     def search_relevant_courses(self, skills: List[str]) -> List[Dict]:
         """搜尋相關課程"""
         try:
-            relevant_courses = []
+            print("收到的原始技能列表:", skills)
             
-            # 擴展搜尋關鍵字
-            search_keywords = {
-                'HTML': ['網頁', 'HTML', 'Web', '前端', '網際網路'],
-                'JavaScript': ['JavaScript', 'JS', '程式設計', 'Web', '前端', 'Node.js'],
-                'CSS': ['CSS', '網頁設計', 'Web', '前端', '美工'],
-                'ReactJS': ['React', '前端框架', 'JavaScript', 'Web'],
-                'Python': ['Python', '程式設計', '資料科學'],
-                'Java': ['Java', '程式設計', '後端'],
-                'C++': ['C++', '程式設計', '系統'],
-                'C#': ['C#', '.NET', '程式設計'],
-                'SQL': ['SQL', '資料庫', 'Database'],
-                'Git': ['Git', '版本控制'],
-                'Linux': ['Linux', '作業系統'],
-                'AWS': ['AWS', '雲端運算', 'Cloud'],
-                'Docker': ['Docker', '容器化', 'Container'],
-                '程式設計': ['程式設計', '程式語言', 'Programming', 'Coding'],
-                '網頁': ['網頁', 'Web', '前端', '網際網路'],
-                '資料庫': ['資料庫', 'Database', 'SQL'],
-                '演算法': ['演算法', 'Algorithm', '資料結構'],
-                '人工智慧': ['AI', '人工智慧', '機器學習', 'Machine Learning']
+            # 將技能字串分割成單個技能
+            individual_skills = set()
+            for skill_string in skills:
+                parts = skill_string.replace('、', ',').split(',')
+                individual_skills.update([s.strip() for s in parts])
+            
+            print("分割後的個別技能:", individual_skills)
+            
+            # 定義更精確的課程關鍵字映射
+            course_keywords = {
+                'JavaScript': ['JavaScript', 'JS', '前端程式', '網頁程式'],
+                'HTML': ['HTML', 'Web', '網頁設計', '前端設計'],
+                'CSS': ['CSS', '網頁設計', '前端設計'],
+                'React': ['React', 'ReactJS', '前端框架'],
+                'Angular': ['Angular', 'AngularJS', '前端框架'],
+                'Vue': ['Vue', 'VueJS', '前端框架'],
+                'Node.js': ['Node', 'NodeJS', '後端程式'],
+                'Java': ['Java', 'JAVA', '程式設計'],
+                'Python': ['Python', 'python', '程式設計'],
+                '程式設計': ['程式設計', '軟體設計', '程式開發'],
+                '網頁設計': ['網頁設計', 'Web Design', '前端設計']
             }
             
             # 展開搜尋關鍵字
-            expanded_skills = set()
-            for skill in skills:
-                expanded_skills.add(skill)
-                if skill in search_keywords:
-                    expanded_skills.update(search_keywords[skill])
+            search_keywords = set()
+            for skill in individual_skills:
+                # 檢查技能是否在關鍵字映射中
+                if skill in course_keywords:
+                    search_keywords.update(course_keywords[skill])
+                # 如果不是"不拘"，也將原始技能加入搜尋
+                if skill != '不拘':
+                    search_keywords.add(skill)
             
-            # 搜尋課程
-            for keyword in expanded_skills:
-                courses = self.courses_df[
+            print("最終搜尋關鍵字:", search_keywords)
+            
+            # 搜尋課程時增加權重計算
+            relevant_courses = []
+            for keyword in search_keywords:
+                mask = (
                     self.courses_df['course_name_zh'].str.contains(keyword, na=False, case=False) |
                     self.courses_df['course_name_en'].str.contains(keyword, na=False, case=False) |
                     self.courses_df['notes'].str.contains(keyword, na=False, case=False)
-                ]
+                )
+                matched_courses = self.courses_df[mask]
                 
-                if not courses.empty:
-                    courses_dict = courses.head(3).apply(lambda row: {
-                        '課程名稱': f"{row['course_id']} {row['course_name_zh']}",
-                        '課程內容': row['notes'] if pd.notna(row['notes']) else '無說明',
-                        '授課教師': row['instructor_zh'],
-                        '開課系所': row['department_zh'],
-                        '上課時間': f"{row['time']}",
-                        '學分數': row['credits']
-                    }, axis=1).tolist()
-                    
-                    relevant_courses.extend(courses_dict)
+                if not matched_courses.empty:
+                    for _, course in matched_courses.iterrows():
+                        # 計算相關性分數
+                        score = 0
+                        if any(k in course['course_name_zh'].lower() for k in ['程式', '設計', '網頁']):
+                            score += 3
+                        if any(k in course['course_name_en'].lower() for k in ['program', 'web', 'design']):
+                            score += 2
+                        if any(k in str(course['notes']).lower() for k in ['程式', '設計', '網頁']):
+                            score += 1
+                        
+                        relevant_courses.append({
+                            '課程名稱': course['course_name_zh'],
+                            '英文名稱': course['course_name_en'],
+                            '學分數': course['credits'],
+                            '授課教師': course['instructor_zh'],
+                            '上課時間': course['time'],
+                            '上課地點': course['location'],
+                            '課程內容': course['notes'],
+                            '相關性分數': score
+                        })
             
-            # 去除重複課程
+            # 根據相關性分數排序並去重
+            relevant_courses.sort(key=lambda x: x['相關性分數'], reverse=True)
             seen = set()
-            unique_courses = []
+            filtered_courses = []
             for course in relevant_courses:
-                course_id = course['課程名稱'].split()[0]
-                if course_id not in seen:
-                    seen.add(course_id)
-                    unique_courses.append(course)
+                if course['課程名稱'] not in seen:
+                    seen.add(course['課程名稱'])
+                    filtered_courses.append(course)
             
-            return unique_courses[:5]  # 限制返回最多5門課程
+            return filtered_courses[:30]
             
         except Exception as e:
             print(f"搜尋課程時發生錯誤: {str(e)}")
-            print("課程資料欄位名稱：", self.courses_df.columns.tolist())
             return []
 
     def generate_context(self, job_type: str) -> str:
@@ -165,7 +181,34 @@ class CareerRAG:
             
             # 整合資訊
             context = f"""
-            職位市場資訊：
+            職位市場資訊：收到的原始技能列表: ['軟體工程系統開發、軟體程式設計', '不拘', 'Github、HTML、JavaScript、CSS、ReactJS', 'MySQL、Oracle、ReactNative', 'HTML、JavaScript、Node.js、AngularJS', '軟體程式設計', '軟體程式設計、網路程式設計', 'Github、Git、AJAX、C#、Java、MS SQL、MySQL、Oracle、PostgreSQL、HTML、JavaScript、jQuery、CSS、ReactJS、AngularJS、VueJS', 'HTML、JavaScript、CSS、ReactJS']
+分割後的個別技能: {'軟體程式設計', 'Node.js', 'MS SQL', 'HTML', 'PostgreSQL', 'jQuery', '軟體工程系統開發', 'VueJS', 'Git', '不拘', 'C#', 'MySQL', 'AJAX', 'ReactNative', 'Java', 'AngularJS', 'JavaScript', 'Github', 'Oracle', '網路程式設計', 'ReactJS', 'CSS'}
+最終搜尋關鍵字: {'軟體程式設計', 'Node.js', 'MS SQL', 'jQuery', 'HTML', 'PostgreSQL', '軟體工程系統開發', 'VueJS', 'Git', 'C#', 'MySQL', 'AJAX', 'ReactNative', 'Java', 'AngularJS', 'JavaScript', 'Github', 'Oracle', '網路程式設計', 'ReactJS', 'CSS'}
+正在搜尋關鍵字: 軟體程式設計
+正在搜尋關鍵字: Node.js
+正在搜尋關鍵字: MS SQL
+正在搜尋關鍵字: jQuery
+正在搜尋關鍵字: HTML
+正在搜尋關鍵字: PostgreSQL
+正在搜尋關鍵字: 軟體工程系統開發
+正在搜尋關鍵字: VueJS
+正在搜尋關鍵字: Git
+找到 66 門相關課程
+正在搜尋關鍵字: C#
+正在搜尋關鍵字: MySQL
+正在搜尋關鍵字: AJAX
+正在搜尋關鍵字: ReactNative
+正在搜尋關鍵字: Java
+找到 2 門相關課程
+正在搜尋關鍵字: AngularJS
+正在搜尋關鍵字: JavaScript
+找到 2 門相關課程
+正在搜尋關鍵字: Github
+正在搜尋關鍵字: Oracle
+正在搜尋關鍵字: 網路程式設計
+正在搜尋關鍵字: ReactJS
+正在搜尋關鍵字: CSS
+去重後共有 39 門課程
             {self._format_jobs(relevant_jobs)}
             
             推薦課程資訊：
@@ -219,78 +262,107 @@ class CareerRAG:
             return "暫無相關職位信息"
         
         summary = "**【職缺摘要】**\n\n"
-        for i, job in enumerate(jobs[:5], 1):
-            summary += f"{i}. {job.get('公司名稱', '未指定')} - {job.get('職稱', '未指定')}\n"
-            summary += f"   - 要求技能：{job.get('擅長工具', '未指定')}\n"
-            summary += f"   - 工作技能：{job.get('工作技能', '未指定')}\n"
-            summary += f"   - 學歷要求：{job.get('學歷要求', '未指定')}\n"
-            summary += f"   - 工作經驗：{job.get('工作經歷', '未指定')}\n\n"
+        for i, job in enumerate(jobs[:50], 1):
+            summary += f"{i}. {job.get('職稱', '職稱未指定')}\n"
+            
+            # 處理其他欄位，使用更友善的預設值
+            skills = job.get('擅長工具')
+            if not skills or skills == '不拘':
+                skills = "依面試能力決定"
+            
+            work_skills = job.get('工作技能')
+            if not work_skills or work_skills == '不拘':
+                work_skills = "依面試能力決定"
+            
+            education = job.get('學歷要求')
+            if not education or education == '不拘':
+                education = "依實際經驗能力面議"
+            
+            experience = job.get('工作經歷')
+            if not experience or experience == '不拘':
+                experience = "依實際經驗能力面議"
+            
+            summary += f"   - 要求技能：{skills}\n"
+            summary += f"   - 工作技能：{work_skills}\n"
+            summary += f"   - 學歷要求：{education}\n"
+            summary += f"   - 工作經驗：{experience}\n\n"
+        
+        if len(jobs) > 50:
+            summary += f"\n... 還有 {len(jobs) - 50} 個相關職缺 ...\n"
+        
         return summary
 
-    def _format_courses_summary(self, courses: List[Dict]) -> str:
+    def _calculate_course_relevance(self, course: Dict, skills: List[str]) -> int:
+        """計算課程相關度分數"""
+        score = 0
+        course_name = course.get('課程名稱', '').lower()
+        course_content = course.get('課程內容', '').lower()
+        
+        # 關鍵字權重表
+        keywords_weight = {
+            'javascript': 10,
+            'python': 10,
+            'java': 9,
+            'c++': 9,
+            '程式設計': 8,
+            '程式': 7,
+            'html': 7,
+            'css': 7,
+            '資料': 6,
+            '系統': 5,
+            '設計': 4
+        }
+        
+        # 檢查課程名稱中的關鍵字
+        for keyword, weight in keywords_weight.items():
+            if keyword in course_name:
+                score += weight * 2  # 課程名稱中出現的關鍵字權重加倍
+                
+        # 檢查課程內容中的關鍵字
+        for keyword, weight in keywords_weight.items():
+            if keyword in course_content:
+                score += weight
+                
+        # 檢查與職缺要求技能的匹配度
+        for skill in skills:
+            if skill.lower() in course_name or skill.lower() in course_content:
+                score += 15  # 與職缺技能相關的課程獲得額外分數
+        
+        return score
+
+    def _format_courses_summary(self, courses: List[Dict], skills: List[str]) -> str:
         """格式化課程摘要"""
         if not courses:
             return "暫無相關課程信息"
         
+        # 為每個課程計算相關度分數
+        scored_courses = [
+            (course, self._calculate_course_relevance(course, skills))
+            for course in courses
+        ]
+        
+        # 根據分數排序課程
+        sorted_courses = sorted(scored_courses, key=lambda x: x[1], reverse=True)
+        
         summary = "**【課程推薦】**\n\n"
-        for i, course in enumerate(courses[:5], 1):
+        for i, (course, score) in enumerate(sorted_courses[:30], 1):
             summary += f"{i}. **{course.get('課程名稱', '未指定')}**\n"
+            summary += f"   - 英文名稱：{course.get('英文名稱', '未指定')}\n"
             summary += f"   - 授課教師：{course.get('授課教師', '未指定')}\n"
             summary += f"   - 開課系所：{course.get('開課系所', '未指定')}\n"
             summary += f"   - 課程內容：{course.get('課程內容', '未指定')}\n"
             summary += f"   - 上課時間：{course.get('上課時間', '未指定')}\n"
             summary += f"   - 學分數：{course.get('學分數', '未指定')}\n\n"
+        
+        if len(courses) > 30:
+            summary += f"\n... 還有 {len(courses) - 30} 門相關課程 ...\n"
+        
         return summary
 
     def generate_career_advice(self, query: str) -> str:
         try:
-            # 改進查詢字串處理
-            job_type = ''
-            if '前端' in query:
-                job_type = '前端'
-            elif '後端' in query:
-                job_type = '後端'
-            elif '全端' in query:
-                job_type = '全端'
-            elif 'AI' in query.upper():
-                job_type = 'AI'
-            elif '資料' in query:
-                job_type = '資料'
-            elif '嵌入式' in query:
-                job_type = '嵌入式'
-            elif '系統' in query:
-                job_type = '系統'
-            elif '自動化' in query:
-                job_type = '自動化'
-            elif '遊戲' in query:
-                job_type = '遊戲'
-            elif '區塊鏈' in query:
-                job_type = '區塊鏈'
-            elif '資安' in query:
-                job_type = '資安'
-            elif '行動' in query or 'APP' in query.upper():
-                job_type = '行動'
-            elif '雲端' in query:
-                job_type = '雲端'
-            elif 'ERP' in query.upper():
-                job_type = 'ERP'
-            elif 'IOT' in query.upper():
-                job_type = 'IoT'
-            elif '測試' in query:
-                job_type = '測試'
-            else:
-                # 如果沒有匹配到特定類型，嘗試提取關鍵字
-                keywords = ['工程師', '開發', '程式', '軟體']
-                for keyword in keywords:
-                    if keyword in query:
-                        job_type = query.split(keyword)[0].strip()
-                        break
-            
-            if not job_type:
-                return "抱歉，我無法理解您想找什麼類型的工作。請試著提供更具體的工作類型，例如：'前端工程師'、'後端開發'等。"
-            
-            # 獲取相關職缺和課程
-            relevant_jobs = self.search_relevant_jobs(job_type)
+            # 獲取職缺和課程資訊
+            relevant_jobs = self.search_relevant_jobs(query)
             skills = set()
             for job in relevant_jobs:
                 if isinstance(job.get('擅長工具'), str):
@@ -300,83 +372,27 @@ class CareerRAG:
             
             relevant_courses = self.search_relevant_courses(list(skills))
             
-            # 生成職缺和課程摘要
+            # 格式化職缺和課程摘要
             jobs_summary = self._format_jobs_summary(relevant_jobs)
-            courses_summary = self._format_courses_summary(relevant_courses)
+            courses_summary = self._format_courses_summary(relevant_courses, list(skills))
             
-            prompt = f"""【職涯顧問建議】
-
-{jobs_summary}
-
-{courses_summary}
-
-根據以上資訊，我為您提供以下建議：
-
-【市場分析】
-• 前端工程師目前市場需求強勁
-• 大多數職位要求掌握 HTML、CSS、JavaScript 等基礎技能
-• ReactJS 是目前最受歡迎的前端框架之一
-• 學歷要求普遍為大學以上，但更注重實際技術能力
-• 經驗要求彈性，從不拘到 3 年以上都有
-
-【技能建議】
-必備技能：
-• HTML5/CSS3
-• JavaScript/ES6+
-• React.js 或其他前端框架
-• Git 版本控制
-• 響應式網頁設計
-
-加分技能：
-• TypeScript
-• Node.js
-• 前端測試工具
-• UI/UX 設計概念
-• RESTful API 串接經驗
-
-【學習規劃】
-1. 基礎階段：
-   • 學習 HTML/CSS 基礎
-   • JavaScript 程式設計基礎
-   • 網頁排版與響應式設計
-
-2. 進階階段：
-   • React.js 框架學習
-   • 前端工程化與打包工具
-   • API 串接與資料處理
-
-3. 實戰階段：
-   • 建立個人作品集
-   • 參與開源專案
-   • 實作完整網頁專案
-
-【求職建議】
-1. 作品準備
-   • 建立個人網站展示作品
-   • 準備 2-3 個完整專案
-   • 維護活躍的 GitHub 帳號
-
-2. 履歷重點
-   • 強調專案經驗與技術棧
-   • 列出具體的技術成就
-   • 附上作品集連結
-
-3. 面試準備
-   • 複習前端技術原理
-   • 準備常見程式題目
-   • 練習線上編程測驗
-
-4. 持續學習
-   • 關注前端技術趨勢
-   • 參與技術社群活動
-   • 訂閱技術部落格或頻道
-"""
+            # 準備上下文資訊
+            prompt = f"""
+            你現在是一位充滿智慧的大學教授，正在為學生提供職涯諮詢。
+            這位學生對{query}感興趣。
+            請以關心且睿智的語氣，運用文言文風格，為這位學生提供建議。
+            """
             
-            return prompt
-        
+            # 使用 Ollama 生成建議
+            response = self.client.generate(model='llama3.2', prompt=prompt)
+            advice = response['response']
+            
+            # 組合完整回應
+            return f"{jobs_summary}\n\n{courses_summary}\n\n{advice}"
+            
         except Exception as e:
             print(f"生成建議時發生錯誤: {str(e)}")
-            return "抱歉，在處理您的請求時發生錯誤。請稍後再試。"
+            return "無法生成完整建議"
 
 def clean_course_data(file_path: str) -> pd.DataFrame:
     """整理課程資料"""
