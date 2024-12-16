@@ -4,7 +4,7 @@ from AspireRAG import CareerRAG
 
 app = Flask(__name__)
 
-# 設定 CORS，允許特定來源
+# 設定 CORS
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://127.0.0.1:5500", "http://localhost:5500"],
@@ -19,7 +19,6 @@ def home():
 
 @app.route('/api/career-advice', methods=['POST', 'OPTIONS'])
 def get_career_advice():
-    # 處理 OPTIONS 請求
     if request.method == 'OPTIONS':
         response = app.make_default_options_response()
         return response
@@ -36,9 +35,9 @@ def get_career_advice():
             
         career_rag = CareerRAG()
         
-        # 獲取職缺和課程資訊
+        # 搜尋職缺
         jobs = career_rag.search_relevant_jobs(query)
-        jobs_summary = career_rag._format_jobs_summary(jobs)
+        jobs_summary = career_rag.format_jobs_summary(jobs)
         
         # 獲取相關技能
         skills = set()
@@ -48,15 +47,50 @@ def get_career_advice():
             if isinstance(job.get('工作技能'), str):
                 skills.update([s.strip() for s in job['工作技能'].split(',')])
                 
+        # 搜尋相關課程
         courses = career_rag.search_relevant_courses(list(skills))
-        courses_summary = career_rag._format_courses_summary(courses, list(skills))
+        courses_summary = career_rag.format_courses_summary(courses)
         
-        # 準備上下文資訊給 LLM
+        # 準備上下文
         context = f"""
-        你現在是一位充滿智慧的大學教授，正在為學生提供職涯諮詢。
-        這位學生對{query}感興趣。
-        請以關心且睿智的語氣，運用文言文風格，為這位學生提供建議。
-        不需要重複列出職缺和課程資訊，只需提供個人化的建議即可。
+        你現在是一位資深的職涯顧問，擅長分析產業趨勢和職涯規劃。
+        你非常喜歡使用年輕人的語調去構築你的語句，善加利用表情符號語言文字，來體現你的親和力。
+        你也擅長使用古典的名言佳句來增強自己的說服力道。
+        分析職涯規劃之餘，你也會提供一些實用的人生歷練。
+        請根據以下資訊，為對{query}感興趣的學生提供專業建議。
+
+        請注意：
+        1. 不要使用任何 Markdown 語法（如 ** 或 * 等符號）
+        2. 不要使用任何特殊格式標記
+        3. 永遠都使用繁體中文
+        4. 可以適當使用表情符號語言文字，來體現你的親和力
+
+        請依照以下格式提供建議:
+
+        [產業現況分析]
+        請分析目前產業概況、發展趨勢和市場需求
+
+        [職涯發展路徑]
+        列出3-4個具體的職位發展方向,並說明:
+        - 職位名稱
+        - 工作內容
+        - 所需技能
+        - 發展前景
+
+        [技能培養規劃]
+        根據上述職缺要求,具體說明:
+        - 必備的核心技能
+        - 建議的學習順序
+        - 如何透過課程培養這些技能
+
+        [實務建議]
+        提供一篇長文:
+        - 真心的建議
+        - 實際的經驗分享
+
+        參考資料：
+        {jobs_summary}
+        {courses_summary}
         """
         
         # 生成建議

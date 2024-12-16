@@ -1,74 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>職涯諮詢助手</title>
+    <title>AspireRAG</title>
     <meta charset="UTF-8">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .input-section {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        input[type="text"] {
-            width: 60%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 10px;
-        }
-        
-        button:hover {
-            background-color: #45a049;
-        }
-        
-        .result-section {
-            margin-top: 20px;
-            white-space: pre-wrap;
-        }
-        
-        .jobs-section, .courses-section, .advice-section {
-            margin-top: 20px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            margin: 20px 0;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center;">職涯諮詢助手</h1>
+        <h1>AspireRAG</h1>
         
         <div class="input-section">
             <input type="text" id="query" placeholder="請輸入您感興趣的職業方向（如：前端工程師）">
@@ -80,9 +19,18 @@
         </div>
         
         <div class="result-section" id="result">
-            <div class="jobs-section" id="jobs"></div>
-            <div class="courses-section" id="courses"></div>
-            <div class="advice-section" id="advice"></div>
+            <div class="jobs-section" id="jobs">
+                <div class="section-title">職位分析</div>
+                <div class="content"></div>
+            </div>
+            <div class="courses-section" id="courses">
+                <div class="section-title">課程建議</div>
+                <div class="content"></div>
+            </div>
+            <div class="advice-section" id="advice">
+                <div class="section-title">職涯建議</div>
+                <div class="content"></div>
+            </div>
         </div>
     </div>
 

@@ -1,0 +1,135 @@
+/* 基礎樣式 */
+body {
+    font-family: 'Microsoft JhengHei', Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    line-height: 1.6;
+}
+
+/* 主容器 */
+.container {
+    background-color: rgba(255, 255, 255, 0.97);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(64, 164, 241, 0.1);
+}
+
+/* 標題樣式 */
+h1 {
+    text-align: center;
+    color: #1976d2;
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(25, 118, 210, 0.1);
+}
+
+/* 輸入區域 */
+.input-section {
+    margin-bottom: 30px;
+    text-align: center;
+    padding: 20px;
+    background: rgba(236, 246, 253, 0.8);
+    border-radius: 10px;
+}
+
+/* 輸入框 */
+input[type="text"] {
+    width: 70%;
+    padding: 15px;
+    font-size: 16px;
+    border: 2px solid #bbdefb;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(25, 118, 210, 0.1);
+}
+
+input[type="text"]:focus {
+    border-color: #64b5f6;
+    box-shadow: 0 0 8px rgba(25, 118, 210, 0.2);
+    outline: none;
+}
+
+/* 按鈕樣式 */
+button {
+    padding: 15px 30px;
+    font-size: 16px;
+    background: linear-gradient(135deg, #64b5f6 0%, #1976d2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 6px rgba(25, 118, 210, 0.2);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #42a5f5 0%, #1565c0 100%);
+    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+}
+
+/* 載入動畫 */
+.loading {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    color: #1976d2;
+    font-style: italic;
+}
+
+/* 結果區域 */
+.result-section {
+    margin-top: 30px;
+    white-space: pre-wrap;
+}
+
+/* 各個結果區塊 */
+.jobs-section, .courses-section, .advice-section {
+    margin-top: 25px;
+    padding: 25px;
+    border-radius: 10px;
+    background: #f8fdff;
+    border: 1px solid #e3f2fd;
+    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.05);
+    transition: all 0.3s ease;
+}
+
+.jobs-section:hover, .courses-section:hover, .advice-section:hover {
+    transform: translateY(-3px);
+    border-color: #bbdefb;
+    box-shadow: 0 8px 20px rgba(25, 118, 210, 0.1);
+}
+
+/* 區塊標題 */
+.section-title {
+    color: #1976d2;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #64b5f6;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .container {
+        padding: 15px;
+    }
+    
+    input[type="text"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    button {
+        width: 100%;
+        margin-left: 0;
+    }
+}
