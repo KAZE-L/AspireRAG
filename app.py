@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from AspireRAG import CareerRAG
+import traceback 
 
 app = Flask(__name__)
 
@@ -36,10 +37,13 @@ def get_career_advice():
         career_rag = CareerRAG()
         
         # 搜尋職缺
+        job_type = career_rag.extract_job_type(query)
+        if not job_type:
+            job_type = '前端'  # 默認值
+        
         jobs = career_rag.search_relevant_jobs(query)
         jobs_summary = career_rag.format_jobs_summary(jobs)
         
-        # 獲取相關技能
         skills = set()
         for job in jobs:
             if isinstance(job.get('擅長工具'), str):
@@ -47,8 +51,8 @@ def get_career_advice():
             if isinstance(job.get('工作技能'), str):
                 skills.update([s.strip() for s in job['工作技能'].split(',')])
                 
-        # 搜尋相關課程
-        courses = career_rag.search_relevant_courses(list(skills))
+        # 傳入職位類型
+        courses = career_rag.search_relevant_courses(list(skills), job_type)
         courses_summary = career_rag.format_courses_summary(courses)
         
         # 準備上下文
@@ -64,6 +68,8 @@ def get_career_advice():
         2. 不要使用任何特殊格式標記
         3. 永遠都使用繁體中文
         4. 可以適當使用表情符號語言文字，來體現你的親和力
+        5. 不要使用*
+        6. 不要使用**
 
         請依照以下格式提供建議:
 
@@ -105,7 +111,8 @@ def get_career_advice():
         })
         
     except Exception as e:
-        print(f"Error: {str(e)}")
+        error_traceback = traceback.format_exc()  # 獲取完整的錯誤堆疊
+        print(f"錯誤詳情:\n{error_traceback}")
         return jsonify({
             'status': 'error',
             'message': str(e)

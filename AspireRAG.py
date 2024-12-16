@@ -61,8 +61,10 @@ class CareerRAG:
         # 檢查每個職位類型的關鍵字
         for job_type, type_keywords in keywords.items():
             if any(keyword in text for keyword in type_keywords):
+                print(f"匹配到職位類型: {job_type}")  # 調試信息
                 return job_type
-                
+        
+        print("未匹配到職位類型，使用默認值: 前端")  # 調試信息
         return None
 
     def search_relevant_jobs(self, text: str) -> List[Dict]:
@@ -273,147 +275,126 @@ class CareerRAG:
             print(f"搜尋職位時發生錯誤: {str(e)}")
             return []
 
-    def search_relevant_courses(self, skills: List[str]) -> List[Dict]:
+    def search_relevant_courses(self, skills: List[str], job_type: str = '前端') -> List[Dict]:
         """搜尋相關課程"""
         try:
-            # 定義課程領域權重映射
-            course_weights = {
+            print(f"當前搜尋的職位類型: {job_type}")  # 調試信息
+            
+            # 定義不同職位類型的關鍵字和權重
+            course_keywords = {
                 '前端': {
-                    'high_priority': {
-                        'JavaScript': 5,
-                        'Web': 5,
-                        '網頁': 5,
-                        'HTML': 4,
-                        'CSS': 4,
-                        'React': 4,
-                        'Vue': 4,
-                        'Angular': 4,
-                        'Frontend': 4,
-                        '前端': 4,
-                        'UI': 3,
-                        'UX': 3,
-                        '使用者介面': 3
-                    },
-                    'medium_priority': {
-                        'Programming': 2,
-                        '程式設計': 2,
-                        'Node.js': 2,
-                        'TypeScript': 2,
-                        '資料結構': 2,
-                        '演算法': 2
-                    },
-                    'low_priority': {
-                        'Database': 1,
-                        '資料庫': 1,
-                        'SQL': 1,
-                        '軟體工程': 1,
-                        '系統分析': 1
-                    }
+                    'javascript': 20,
+                    'html': 10,
+                    'css': 10,
+                    'react': 8,
+                    'vue': 8,
+                    'angular': 8,
+                    '前端': 8,
+                    'frontend': 8,
+                    'web': 20,
+                    '程式': 8,
+                    '使用者介面': 7,
+                    '網頁設計': 7,
+                    'typescript': 6,
+                    'jquery': 5,
+                    'bootstrap': 5,
+                    'sass': 5,
+                    'webpack': 5
                 },
                 '後端': {
-                    'high_priority': {
-                        'Java': 5,
-                        'Python': 5,
-                        'Backend': 5,
-                        '後端': 5,
-                        'SQL': 4,
-                        'Database': 4,
-                        '資料庫': 4,
-                        'API': 4
-                    },
-                    'medium_priority': {
-                        'Node.js': 3,
-                        'Programming': 2,
-                        '程式設計': 2,
-                        '資料結構': 2,
-                        '演算法': 2
-                    },
-                    'low_priority': {
-                        'Web': 1,
-                        '網頁': 1,
-                        '系統設計': 1
-                    }
+                    'java': 10,
+                    'python': 10,
+                    'nodejs': 10,
+                    'php': 8,
+                    'sql': 8,
+                    'database': 8,
+                    '資料庫': 8,
+                    '後端': 8,
+                    'backend': 8,
+                    'spring': 7,
+                    'django': 7,
+                    'mongodb': 7,
+                    'redis': 6,
+                    'api': 6,
+                    '伺服器': 6,
+                    'server': 6,
+                    'linux': 5,
+                    'docker': 5
                 },
                 '全端': {
-                    'high_priority': {
-                        'JavaScript': 5,
-                        'Python': 5,
-                        'Java': 5,
-                        'Web': 5,
-                        '網頁': 5,
-                        'Frontend': 4,
-                        'Backend': 4,
-                        'Fullstack': 4,
-                        '全端': 4
-                    },
-                    'medium_priority': {
-                        'Database': 3,
-                        '資料庫': 3,
-                        'API': 3,
-                        'Node.js': 3,
-                        'React': 3,
-                        'Vue': 3
-                    },
-                    'low_priority': {
-                        '系統設計': 2,
-                        '軟體工程': 2,
-                        '資料結構': 2,
-                        '演算法': 2
-                    }
+                    '程式': 20,
+                    '全端': 10,
+                    '全棧': 10,
+                    'javascript': 8,
+                    'python': 8,
+                    'java': 8,
+                    'html': 8,
+                    'css': 8,
+                    'sql': 8,
+                    'nodejs': 7,
+                    'react': 7,
+                    'vue': 7,
+                    'spring': 7,
+                    'django': 7,
+                    'database': 7,
+                    '資料庫': 7,
+                    'api': 6,
+                    'docker': 5
                 }
             }
 
-            # 根據查詢類型獲取相應的權重
-            weights = course_weights.get('前端', {})  # 預設使用前端權重
-            search_keywords = {}
-            
-            # 合併所有優先級的關鍵字和權重
-            for priority in ['high_priority', 'medium_priority', 'low_priority']:
-                search_keywords.update(weights.get(priority, {}))
-            
-            # 添加技能關鍵字
-            for skill in skills:
-                if skill not in search_keywords:
-                    search_keywords[skill] = 2  # 給予中等權重
+            # 根據職位類型選擇對應的關鍵字權重
+            keywords = course_keywords.get(job_type, course_keywords['前端'])
+            print(f"使用的關鍵字權重: {keywords}")  # 調試信息
             
             relevant_courses = []
-            for keyword, weight in search_keywords.items():
-                if keyword != '不拘':
-                    mask = (
-                        self.courses_df['course_name_zh'].str.contains(keyword, na=False, case=False) |
-                        self.courses_df['course_name_en'].str.contains(keyword, na=False, case=False) 
-                    )
-                    matched_courses = self.courses_df[mask]
-                    
-                    for _, course in matched_courses.iterrows():
-                        course_text = f"{course['course_name_zh']} {course['course_name_en']} {course['notes']}"
-                        relevance_score = 0
-                        
-                        # 計算加權分數
-                        for k, w in search_keywords.items():
-                            if k.lower() in course_text.lower():
-                                relevance_score += w
-                        
-                        relevant_courses.append({
-                            '課程名稱': course['course_name_zh'],
-                            '英文名稱': course['course_name_en'],
-                            '學分數': course['credits'],
-                            '授課教師': course['instructor_zh'],
-                            '上課時間': course['time'],
-                            '上課地點': course['location'],
-                            '課程內容': course['notes'],
-                            '相關度': relevance_score
-                        })
             
-            # 去重並按相關度排序
+            # 遍歷所有課程
+            for _, course in self.courses_df.iterrows():
+                score = 0
+                course_text = f"{str(course['course_name_zh'])} {str(course['course_name_en'])} {str(course['notes'])}".lower()
+                
+                # 計算關鍵字分數
+                for keyword, weight in keywords.items():
+                    if keyword.lower() in course_text:
+                        score += weight
+                        print(f"課程 '{course['course_name_zh']}' 匹配到關鍵字 '{keyword}', 加分: {weight}")  # 調試信息
+                
+                # 檢查技能關鍵字
+                for skill in skills:
+                    if skill.lower() in course_text:
+                        score += 2
+                        print(f"課程 '{course['course_name_zh']}' 匹配到技能 '{skill}', 加分: 2")  # 調試信息
+                
+                # 只添加有分數的課程
+                if score > 0:
+                    relevant_courses.append({
+                        '課程名稱': course['course_name_zh'],
+                        '英文名稱': course['course_name_en'],
+                        '學分數': course['credits'],
+                        '授課教師': course['instructor_zh'],
+                        '上課時間': course['time'],
+                        '上課地點': course['location'],
+                        '課程內容': course['notes'],
+                        '相關度': score
+                    })
+            
+            # 根據相關度排序
+            sorted_courses = sorted(relevant_courses, key=lambda x: x['相關度'], reverse=True)
+            
+            # 去重
             seen = set()
             filtered_courses = []
-            for course in sorted(relevant_courses, key=lambda x: x['相關度'], reverse=True):
+            for course in sorted_courses:
                 if course['課程名稱'] not in seen:
                     seen.add(course['課程名稱'])
                     filtered_courses.append(course)
             
-            return filtered_courses[:10]  # 只返回最相關的前10門課程
+            print(f"\n找到 {len(filtered_courses)} 門相關課程")  # 調試信息
+            for course in filtered_courses[:3]:
+                print(f"課程: {course['課程名稱']}, 相關度: {course['相關度']}")  # 調試信息
+            
+            return filtered_courses[:10]
             
         except Exception as e:
             print(f"搜尋課程時發生錯誤: {str(e)}")
@@ -451,6 +432,11 @@ class CareerRAG:
     def generate_career_advice(self, query: str) -> str:
         """生成職涯建議"""
         try:
+            # 先提取職位類型
+            job_type = self.extract_job_type(query)
+            if not job_type:
+                job_type = '前端'  # 默認值
+            
             jobs = self.search_relevant_jobs(query)
             jobs_summary = self.format_jobs_summary(jobs)
             
@@ -461,7 +447,8 @@ class CareerRAG:
                 if isinstance(job.get('工作技能'), str):
                     skills.update([s.strip() for s in job['工作技能'].split(',')])
                     
-            courses = self.search_relevant_courses(list(skills))
+            # 傳入職位類型
+            courses = self.search_relevant_courses(list(skills), job_type)
             courses_summary = self.format_courses_summary(courses)
             
             context = f"""

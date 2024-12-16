@@ -30,7 +30,7 @@ h1 {
     margin-bottom: 30px;
     text-align: center;
     padding: 20px;
-    background: rgba(236, 246, 253, 0.8);
+    /* background: rgba(236, 246, 253, 0.8); */
     border-radius: 10px;
 }
 
@@ -98,11 +98,11 @@ button:hover {
     transition: all 0.3s ease;
 }
 
-.jobs-section:hover, .courses-section:hover, .advice-section:hover {
+/* .jobs-section:hover, .courses-section:hover, .advice-section:hover {
     transform: translateY(-3px);
     border-color: #bbdefb;
     box-shadow: 0 8px 20px rgba(25, 118, 210, 0.1);
-}
+} */
 
 /* 區塊標題 */
 .section-title {
