@@ -14,11 +14,11 @@
             <button onclick="getAdvice()">獲取建議</button>
         </div>
         
-        <div class="loading" id="loading">
+        <div class="loading" id="loading" style="display: none;">
             <p>正在分析中，請稍候...</p>
         </div>
         
-        <div class="result-section" id="result">
+        <div class="result-section" id="result" style="display: none;">
             <div class="jobs-section" id="jobs">
                 <div class="section-title">職位分析</div>
                 <div class="content"></div>
@@ -42,7 +42,7 @@
                 return;
             }
             
-            // 顯示載入中
+            // 顯示載入中，隱藏結果
             document.getElementById('loading').style.display = 'block';
             document.getElementById('result').style.display = 'none';
             
@@ -67,18 +67,17 @@
                 }
                 
                 // 更新顯示內容
-                document.getElementById('jobs').innerHTML = data.jobs;
-                document.getElementById('courses').innerHTML = data.courses;
-                document.getElementById('advice').innerHTML = data.advice;
+                document.getElementById('jobs').querySelector('.content').innerHTML = data.jobs;
+                document.getElementById('courses').querySelector('.content').innerHTML = data.courses;
+                document.getElementById('advice').querySelector('.content').innerHTML = data.advice;
                 
-                // 顯示結果
+                // 隱藏載入中，顯示結果
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('result').style.display = 'block';
                 
             } catch (error) {
                 console.error('Error:', error);
                 alert('獲取建議時發生錯誤：' + error.message);
-            } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
