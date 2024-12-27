@@ -1,9 +1,9 @@
-flask==3.0.0
-flask-cors==4.0.0
+flask
+flask-cors
 pandas
-ollama==0.1.6
-python-dotenv==1.0.0
+ollama
+python-dotenv
 openai
-numpy==2.2
+numpy
 scikit-learn
 gunicorn
