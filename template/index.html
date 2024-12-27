@@ -3,12 +3,12 @@
 <head>
     <title>AspireRAG</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <div class="container">
         <h1>AspireRAG</h1>
-        
+        <h2><center>有關於學校課程/未來職缺，我想要了解......</center></h2>
         <div class="input-section">
             <input type="text" id="query" placeholder="請輸入您感興趣的職業方向（如：前端工程師）">
             <button onclick="getAdvice()">獲取建議</button>
@@ -47,7 +47,7 @@
             document.getElementById('result').style.display = 'none';
             
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/career-advice', {
+                const response = await fetch('/api/career-advice', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

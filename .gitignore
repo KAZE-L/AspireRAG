@@ -39,3 +39,7 @@ ENV/
 
 # 本地配置
 config.local.py
+
+.env
+dataset/emb*.json
+*.zip
